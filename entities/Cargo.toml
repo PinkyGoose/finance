@@ -1,0 +1,21 @@
+[package]
+name = "entities"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "entities"
+path = "src/lib.rs"
+
+[dependencies]
+
+
+serde_json = "1.0.119"
+serde = { version = "1.0.203", features = ["derive"] }
+sea-orm = { version = "0.12.15", features = ["with-chrono"] }
+utoipa = { version = "4.2.3", features = [ "uuid", "chrono" ] }
+chrono = "0.4.38"
+serde_with = { version = "3.8.2", features = ["hex"] }
+validator = { version = "0.18.1", features = ["derive"] }
+parking_lot = "0.12.3"
