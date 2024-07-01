@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
-#[sea_orm(schema_name = "finance", table_name = "expence")]
+#[sea_orm(schema_name = "finance", table_name = "expense")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
@@ -16,17 +16,17 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
-impl ActiveModelBehavior for ActiveModel {}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveIntoActiveModel, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateExpense {
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub value_sum: Decimal,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveIntoActiveModel, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateExpense {
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub value_sum: Decimal,
+}
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveIntoActiveModel, ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateExpence {
-    pub created_at: chrono::DateTime<chrono::FixedOffset>,
-    pub value_sum: Decimal,
-}
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveIntoActiveModel, ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct UpdateExpence {
-    pub created_at: chrono::DateTime<chrono::FixedOffset>,
-    pub value_sum: Decimal,
-}
+impl ActiveModelBehavior for ActiveModel {}
