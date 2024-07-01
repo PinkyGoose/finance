@@ -2,4 +2,4 @@
 
 pub mod prelude;
 
-pub mod expence;
+pub mod expense;

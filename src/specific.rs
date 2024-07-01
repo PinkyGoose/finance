@@ -1,29 +1,22 @@
+use crate::specific::expense::{create_expense, root};
+use axum::routing::{get, post};
 use axum::Router;
-
-mod expence;
-
-
+pub mod expense;
 
 pub fn router() -> Router {
 
     let money = Router::new()
-        .route("/arm", post(arm::create_arm).get(arm::get_arms))
-        .route(
-            "/arm/:id",
-            get(arm::get_arm).put(arm::edit_arm).delete(arm::delete_arm),
-        )
-        .route("/arm/updates", get(arm::get_arm_updates))
-        .route("/arm_list", get(arm::get_arm_list));
+        .route("/expenses", post(create_expense))
+        // .route("/expense", post(expense::create_expense))//.get(expence::get_expenses))
+        // .route(
+        //     "/expense/:id",
+        //     get(expence::get_expense).put(expence::edit_expense).delete(expence::delete_expense),
+        // )
+        ;
 
 
-    let security_router = money;
+    let finance_router = money;
 
     Router::new()
-        .nest("/system", system_router)
-        .nest("/ui", ui_router)
-        .nest("/health", health_router)
-        .nest("/service", service_router)
-        .nest("/events", events_router)
-        .nest("/security", security_router)
-        .nest("/updates", updates_router)
+        .nest("/expenses", finance_router)
 }

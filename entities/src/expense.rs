@@ -4,7 +4,7 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize, ToSchema)]
 #[sea_orm(schema_name = "finance", table_name = "expense")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
@@ -22,6 +22,7 @@ pub struct CreateExpense {
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub value_sum: Decimal,
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveIntoActiveModel, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateExpense {
