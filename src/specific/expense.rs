@@ -10,35 +10,16 @@ use chrono::{DateTime, Utc};
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Decimal;
 use entities::expense::Entity;
+use crate::utils::CreatedEntity;
 
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ExpenseQuery{
 
 }
-pub async fn root() -> &'static str {
-    "Hello, World!"
-}
-#[derive(Serialize, Deserialize)]
-struct ErrorResponse {
-    error: String,
-}
 
-#[derive(Serialize)]
-pub struct CreatedEntity{
-    uuid: Uuid,
-}
-impl ErrorResponse{
-    pub fn new(mes: &str)->Self{
-        Self{error: mes.parse().unwrap() }
-    }
-}
-impl CreatedEntity {
-    pub fn new(uuid: Uuid)-> Self{
-        Self{uuid}
-    }
-}
-#[utoipa::path(post, path = "/expense/expense",
+
+#[utoipa::path(post, path = "/expenses/expense",
 request_body = CreateExpense,
 responses(
 (status = 200, description = "Успешное создание Затрат", body = Expense),

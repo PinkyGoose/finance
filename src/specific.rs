@@ -1,4 +1,4 @@
-use crate::specific::expense::{create_expense, root};
+use crate::specific::expense::{create_expense};
 use axum::routing::{get, post};
 use axum::Router;
 pub mod expense;
@@ -6,7 +6,7 @@ pub mod expense;
 pub fn router() -> Router {
 
     let money = Router::new()
-        .route("/expenses", post(create_expense))
+        .route("/expense", post(create_expense))
         // .route("/expense", post(expense::create_expense))//.get(expence::get_expenses))
         // .route(
         //     "/expense/:id",
