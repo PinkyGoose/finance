@@ -1,18 +1,16 @@
-use crate::specific::expense::{create_expense};
-use axum::routing::post;
+use crate::specific::expense::{create_expense, delete_expense, edit_expense, get_expense, get_expenses};
+use axum::routing::{delete, get, post, put};
 use axum::Router;
 pub mod expense;
 
 pub fn router() -> Router {
 
     let money = Router::new()
-        .route("/expense", post(create_expense))
-        // .route("/expense", post(expense::create_expense))//.get(expence::get_expenses))
-        // .route(
-        //     "/expense/:id",
-        //     get(expence::get_expense).put(expence::edit_expense).delete(expence::delete_expense),
-        // )
-        ;
+        .route("/create", post(create_expense))
+        .route("/get_all", post(get_expenses))
+        .route("/get/:id", post(get_expense))
+        .route("/edit/:id", post(edit_expense))
+        .route("/delete/:id", post(delete_expense));
 
 
     let finance_router = money;
