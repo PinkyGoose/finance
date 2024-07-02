@@ -1,7 +1,6 @@
 
 use crate::utils::CreatedEntity;
 use crate::specific::expense;
-use crate::specific::expense::__path_create_expense;
 use crate::specific::expense::ExpenseQuery;
 use entities::{
     expense::{CreateExpense, Model as Expense, UpdateExpense},

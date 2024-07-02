@@ -1,7 +1,5 @@
-use axum::{Extension, Json, Router};
+use axum::{Extension, Router};
 use axum::extract::DefaultBodyLimit;
-use axum::response::IntoResponse;
-use axum::routing::get;
 use clap::Parser;
 use sea_orm::{ConnectOptions, Database};
 
@@ -20,6 +18,7 @@ const MAX_DB_CONNECTIONS: u32 = 20;
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
+    tracing_subscriber::fmt::init();
 
     let args = cli::Args::parse();
     tracing::debug!(
@@ -49,7 +48,8 @@ async fn main() {
     let app = app
         .layer(Extension(pool.clone()))
         .layer(DefaultBodyLimit::disable());
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind(args.listen_addr).await.unwrap();
+    tracing::info!("service started: {}",args.listen_addr);
     axum::serve(listener, app.into_make_service()).await.unwrap();
 
 }

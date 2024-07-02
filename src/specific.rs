@@ -1,5 +1,5 @@
 use crate::specific::expense::{create_expense};
-use axum::routing::{get, post};
+use axum::routing::post;
 use axum::Router;
 pub mod expense;
 
