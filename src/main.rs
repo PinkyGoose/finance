@@ -18,7 +18,10 @@ const MAX_DB_CONNECTIONS: u32 = 20;
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .compact()
+        .init();
 
     let args = cli::Args::parse();
     tracing::debug!(
