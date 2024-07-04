@@ -8,7 +8,6 @@ use entities::expense::{Column, UpdateExpense};
 
 use crate::utils::{CreatedEntity, Error};
 use sea_orm::{entity::*, query::*, sea_query};
-use sea_query::extension::postgres::PgExpr;
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -40,7 +39,7 @@ pub struct DatePeriod{
     stop: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
 ///Создание затрат
-#[utoipa::path(post, path = "/expenses/expense",
+#[utoipa::path(post, path = "/expenses/create",
 request_body = CreateExpense,
 responses(
 (status = 200, description = "Успешное создание Затрат", body = Expense),
@@ -51,7 +50,7 @@ pub(crate) async fn create_expense(
     Extension(ref pool): Extension<DatabaseConnection>,
     Json(payload): Json<CreateExpense>,
 )-> Result<Json<CreatedEntity>, Error>{
-    tracing::info!("get expense");
+    tracing::info!("create expense");
     let arm = ExpenseEntity::insert(payload.into_active_model())
         .exec_with_returning(pool)
         .await
@@ -71,7 +70,7 @@ pub(crate) async fn get_expenses(
     Extension(ref pool): Extension<DatabaseConnection>,
     Json(q): Json<ExpenseQuery>,
 )-> Result<Json<Vec<Expense>>, Error>{
-    tracing::info!("get expenses");
+    tracing::info!("get all expenses");
     use entities::expense::Column;
     let mut query = ExpenseEntity::find();
     if let Some(pagination) = q.pagination {
@@ -177,6 +176,5 @@ pub(super) async fn delete_expense(
 ) -> Result<Json<AffectedRows>, Error> {
     tracing::info!("delete expense");
     let result = ExpenseEntity::delete_by_id(id).exec(pool).await?;
-
     Ok(Json(AffectedRows::new(result.rows_affected)))
 }

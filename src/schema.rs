@@ -1,4 +1,5 @@
 
+use sea_orm::prelude::Decimal;
 use crate::schema::expense::AffectedRows;
 use crate::schema::expense::Pagination;
 use crate::schema::expense::DatePeriod;
