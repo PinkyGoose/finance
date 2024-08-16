@@ -30,11 +30,13 @@ pub struct ExpenseQuery{
 
 }
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Pagination{
     offset: Option<u64>,
     limit: Option<u64>,
 }
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct DatePeriod{
     start: Option<chrono::DateTime<chrono::FixedOffset>>,
     stop: Option<chrono::DateTime<chrono::FixedOffset>>,
@@ -91,7 +93,8 @@ pub(crate) async fn get_expenses(
         }
     }
     let arms = query.all(pool).await.map_err(Error::DatabaseInternal)?;
-    Ok(Json(arms))
+    let resp = Json(arms);
+    Ok(resp)
 }
 
 /// Изменение затрат по id
