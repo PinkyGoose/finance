@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize, ToSchema)]
 #[sea_orm(schema_name = "finance", table_name = "expense")]
+#[serde(rename_all = "camelCase")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
