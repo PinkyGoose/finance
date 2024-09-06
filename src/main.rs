@@ -1,4 +1,4 @@
-use axum::{Extension, Router};
+use axum::{Extension, Json, Router};
 use axum::extract::DefaultBodyLimit;
 use clap::Parser;
 use sea_orm::{ConnectOptions, Database};
@@ -7,12 +7,14 @@ use tracing::log::LevelFilter;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 use migration::{Migrator, MigratorTrait};
+use crate::utils::Error;
 
 mod cli;
 mod specific;
 mod schema;
 mod utils;
-
+use sea_orm::EntityTrait;
+use entities::{expense::{CreateExpense,Model as Expense, Entity as ExpenseEntity}};
 const MAX_DB_CONNECTIONS: u32 = 20;
 
 #[tokio::main]
@@ -53,6 +55,10 @@ async fn main() {
         .layer(DefaultBodyLimit::disable());
     let listener = tokio::net::TcpListener::bind(args.listen_addr).await.unwrap();
     tracing::info!("service started: {}",args.listen_addr);
+    use entities::expense::Column;
+    let mut query = ExpenseEntity::find();
+    let expenses = query.all(&pool).await.map_err(Error::DatabaseInternal).unwrap();
+    let resp = Json(expenses);
     axum::serve(listener, app.into_make_service()).await.unwrap();
 
 }

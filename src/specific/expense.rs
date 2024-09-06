@@ -13,6 +13,7 @@ use tracing::instrument;
 use uuid::Uuid;
 
 #[derive(Serialize, ToSchema, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct AffectedRows {
     affected_rows: u64,
 }
@@ -21,10 +22,51 @@ impl AffectedRows {
         Self { affected_rows }
     }
 }
+#[derive(Clone, Debug, Deserialize, ToSchema, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum Sort{
+    Desc,
+    #[default]
+    Asc,
+}
+#[derive(Clone, Debug, Deserialize, ToSchema, Default)]
+#[serde(rename_all = "camelCase")]
+pub enum Field{
+    Id,
+    #[default]
+    CreatedAt,
+    ValueSum
+}
+impl Into<Column> for Field{
+    fn into(self) -> Column {
+        match self {
+            Field::Id => Column::Id,
+            Field::CreatedAt => Column::CreatedAt,
+            Field::ValueSum => Column::ValueSum,
+        }
+    }
+}
+
+
+#[derive(Clone, Debug, Deserialize, ToSchema, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Sorting{
+    field_name: Field,
+    order: Sort,
+}
+impl Into<Order> for Sort{
+    fn into(self) -> Order {
+       match self {
+           Sort::Desc => Order::Desc,
+           Sort::Asc => Order::Asc
+       }
+    }
+}
 
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ExpenseQuery{
+    sort: Option<Sorting>,
     pagination: Option<Pagination>,
     period: Option<DatePeriod>
 
@@ -42,7 +84,7 @@ pub struct DatePeriod{
     stop: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
 ///Создание затрат
-#[utoipa::path(post, path = "/expenses/expense",
+#[utoipa::path(post, path = "/expenses/create",
 request_body = CreateExpense,
 responses(
 (status = 200, description = "Успешное создание Затрат", body = Expense),
@@ -53,7 +95,7 @@ pub(crate) async fn create_expense(
     Extension(ref pool): Extension<DatabaseConnection>,
     Json(payload): Json<CreateExpense>,
 )-> Result<Json<CreatedEntity>, Error>{
-    tracing::info!("get expense");
+    tracing::info!("create expense");
     let arm = ExpenseEntity::insert(payload.into_active_model())
         .exec_with_returning(pool)
         .await
@@ -92,8 +134,16 @@ pub(crate) async fn get_expenses(
             query = query.filter(Column::CreatedAt.lte(stop));
         }
     }
-    let arms = query.all(pool).await.map_err(Error::DatabaseInternal)?;
-    let resp = Json(arms);
+    if let Some(sort) = q.sort{
+        query = query.order_by(match sort.field_name {
+            Field::Id => Column::Id,
+            Field::CreatedAt => Column::CreatedAt,
+            Field::ValueSum => Column::ValueSum
+        }, sort.order.into());
+    }
+
+    let expenses = query.all(pool).await.map_err(Error::DatabaseInternal)?;
+    let resp = Json(expenses);
     Ok(resp)
 }
 
