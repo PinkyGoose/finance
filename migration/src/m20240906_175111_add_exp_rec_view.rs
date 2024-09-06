@@ -12,7 +12,7 @@ impl MigrationTrait for Migration {
         let sql = r#"CREATE OR REPLACE VIEW finance.expense_with_receipt AS
 WITH daily_sallary_per_job AS (
     SELECT
-        e.id as id
+        e.id as id,
         e.user_id,
         e.created_at::date AS expense_date,
         e.value_sum AS expense_amount,
@@ -34,7 +34,7 @@ SELECT
 FROM
     daily_sallary_per_job
 GROUP BY
-    user_id, expense_date, expense_amount;"#;
+    user_id, expense_date, expense_amount, id;"#;
 
         let stmt = Statement::from_string(manager.get_database_backend(), sql.to_owned());
         db.execute(stmt).await?;
