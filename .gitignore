@@ -2,3 +2,4 @@
 migration/target
 entities/target
 .env
+Cargo.lock

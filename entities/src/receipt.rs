@@ -13,7 +13,7 @@ pub struct Model {
     pub start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub stop_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub sallary: Option<Decimal>,
-    pub parent:Option<Uuid>,
+    pub parent_id:Option<Uuid>,
     pub user_id: Uuid,
     pub name: Option<String>,
     pub position: Option<String>,
@@ -28,7 +28,7 @@ pub struct CreateReceipt {
     pub start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub stop_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub sallary: Decimal,
-    pub parent: Option<Uuid>,
+    pub parent_id: Option<Uuid>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveIntoActiveModel, ToSchema)]
