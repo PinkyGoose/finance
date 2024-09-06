@@ -11,7 +11,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     #[serde(skip_serializing)]
-    pub id: Uuid,
+    pub expense_id: Uuid,
     pub user_id: Uuid,
     pub expense_date: chrono::DateTime<chrono::FixedOffset>,
     pub expense_amount: Decimal,

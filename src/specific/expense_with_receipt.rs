@@ -3,11 +3,14 @@ use axum::extract::Query;
 use sea_orm::{ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, QueryOrder, QueryResult, Statement};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use crate::specific::expense::{DatePeriod, ExpenseResp, Field, Pagination, Sorting};
+// use crate::specific::expense::{DatePeriod, ExpenseResp, Field, Pagination, Sorting};
 use crate::specific::UserId;
 use crate::utils::Error;
-use entities::exp_rec_list::{Entity as ExpRecpEntity, Model as ExpRecp};
+use entities::exp_rec_list::{Column, Entity as ExpRecpEntity, Model as ExpRecp};
 use sea_orm::QueryFilter;
+use tracing::info;
+use crate::specific::expense::{DatePeriod, Pagination, Sorting};
+
 #[derive(Serialize, ToSchema, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ExpenseReceiptResp{
@@ -42,7 +45,7 @@ pub(crate) async fn get_expenses_receipts(
     Json(q): Json<ExpReceiptQuery>,
 ) -> Result<Json<ExpenseReceiptResp>, Error> {
     tracing::info!("get expenses");
-    use entities::expense::Column;
+    // use entities::expense::Column;
     let mut query = ExpRecpEntity::find();
     // if let Some(pagination) = q.pagination {
     //     if let Some(offset) = pagination.offset {
@@ -55,13 +58,13 @@ pub(crate) async fn get_expenses_receipts(
     query = query.filter(Column::UserId.eq(user_id.id));
     if let Some(datas) = q.period {
         if let Some(start) = datas.start {
-            query = query.filter(Column::CreatedAt.gte(start));
+            query = query.filter(Column::ExpenseDate.gte(start));
         }
         if let Some(stop) = datas.stop {
-            query = query.filter(Column::CreatedAt.lte(stop));
+            query = query.filter(Column::ExpenseDate.lte(stop));
         }
     }
-
+    // info!("{:?}", query.)
     let expenses = query.all(pool).await.map_err(Error::DatabaseInternal)?;
     let sql = r#"
         select sum(expense_amount)::float as total_expense, sum(total_daily_sallary)::float as total_sallary, count(total_daily_sallary) as total_count
@@ -94,6 +97,7 @@ pub(crate) async fn get_expenses_receipts(
             };
         }
     }
+    info!("{:?}",expenses);
     let balance = total_sallary-total_expense;
     let resp = Json(ExpenseReceiptResp{
         expenses_receipts: expenses,
