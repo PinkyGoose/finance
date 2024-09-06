@@ -1,5 +1,5 @@
-use sea_orm_migration::prelude::*;
 use crate::sea_orm::Statement;
+use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -15,6 +15,7 @@ impl MigrationTrait for Migration {
                 stop_date timestamp with time zone default now() not null,
                 sallary numeric not null default 0,
                 user_id uuid,
+                parent_id uuid,
                 FOREIGN KEY (user_id)  REFERENCES security.user (id) ON DELETE CASCADE
             );"#;
 

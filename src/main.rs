@@ -1,20 +1,24 @@
-use axum::{Extension, Json, Router};
+use argon2::Argon2;
 use axum::extract::DefaultBodyLimit;
+use axum::{Extension, Json, Router};
 use clap::Parser;
 use sea_orm::{ConnectOptions, Database};
 
+use crate::utils::Error;
+use migration::{Migrator, MigratorTrait};
 use tracing::log::LevelFilter;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use migration::{Migrator, MigratorTrait};
-use crate::utils::Error;
 
+pub mod auth;
+pub mod authorization;
 mod cli;
-mod specific;
 mod schema;
+mod specific;
 mod utils;
+
+use entities::expense::{CreateExpense, Entity as ExpenseEntity, Model as Expense};
 use sea_orm::EntityTrait;
-use entities::{expense::{CreateExpense,Model as Expense, Entity as ExpenseEntity}};
 const MAX_DB_CONNECTIONS: u32 = 20;
 
 #[tokio::main]
@@ -36,7 +40,8 @@ async fn main() {
         .merge(
             SwaggerUi::new("/api/data/swagger-ui")
                 .url("/api/data/api-doc/openapi.json", schema::Docs::openapi()),
-        );
+        )
+        .nest("/api/auth", auth::router());
     let max_connections = args.max_db_connections.unwrap_or(MAX_DB_CONNECTIONS);
     let mut opts = ConnectOptions::new(args.postgres_url);
     opts.max_connections(max_connections)
@@ -52,13 +57,14 @@ async fn main() {
     }
     let app = app
         .layer(Extension(pool.clone()))
+        .layer(Extension(Argon2::default()))
         .layer(DefaultBodyLimit::disable());
-    let listener = tokio::net::TcpListener::bind(args.listen_addr).await.unwrap();
-    tracing::info!("service started: {}",args.listen_addr);
+    let listener = tokio::net::TcpListener::bind(args.listen_addr)
+        .await
+        .unwrap();
+    tracing::info!("service started: {}", args.listen_addr);
     use entities::expense::Column;
-    let mut query = ExpenseEntity::find();
-    let expenses = query.all(&pool).await.map_err(Error::DatabaseInternal).unwrap();
-    let resp = Json(expenses);
-    axum::serve(listener, app.into_make_service()).await.unwrap();
-
+    axum::serve(listener, app.into_make_service())
+        .await
+        .unwrap();
 }

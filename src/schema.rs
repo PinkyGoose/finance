@@ -1,13 +1,10 @@
-
 use crate::schema::expense::AffectedRows;
-use crate::schema::expense::Pagination;
 use crate::schema::expense::DatePeriod;
-use crate::utils::CreatedEntity;
+use crate::schema::expense::Pagination;
 use crate::specific::expense;
 use crate::specific::expense::ExpenseQuery;
-use entities::{
-    expense::{CreateExpense, Model as Expense, UpdateExpense},
-};
+use crate::utils::CreatedEntity;
+use entities::expense::{CreateExpense, Model as Expense, UpdateExpense};
 use utoipa::{openapi::Server, Modify, OpenApi};
 
 #[derive(utoipa::ToSchema)]

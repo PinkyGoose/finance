@@ -1,5 +1,5 @@
-use sea_orm_migration::prelude::*;
 use crate::sea_orm::Statement;
+use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -21,12 +21,15 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Replace the sample below with your own migration scripts
-        todo!();
+        let db = manager.get_connection();
+        let sql = r#"
+        alter table finance.expense
+            drop column user_id
+        "#;
 
-        manager
-            .drop_table(Table::drop().table(Post::Table).to_owned())
-            .await
+        let stmt = Statement::from_string(manager.get_database_backend(), sql.to_owned());
+        db.execute(stmt).await?;
+        Ok(())
     }
 }
 

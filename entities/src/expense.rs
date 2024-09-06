@@ -12,6 +12,7 @@ pub struct Model {
     pub id: Uuid,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub value_sum: Decimal,
+    pub user_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

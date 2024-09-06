@@ -1,10 +1,10 @@
+use axum::extract::{Path, Query};
+use axum::{Extension, Json};
+use entities::expense::{Column, UpdateExpense};
+use entities::expense::{CreateExpense, Entity as ExpenseEntity, Model as Expense};
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QuerySelect};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use entities::{expense::{CreateExpense,Model as Expense, Entity as ExpenseEntity}};
-use axum::{Extension, Json};
-use axum::extract::{Path, Query};
-use entities::expense::{Column, UpdateExpense};
 
 use crate::utils::{CreatedEntity, Error};
 use sea_orm::{entity::*, query::*, sea_query};
@@ -24,20 +24,20 @@ impl AffectedRows {
 }
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
-pub enum Sort{
+pub enum Sort {
     Desc,
     #[default]
     Asc,
 }
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
-pub enum Field{
+pub enum Field {
     Id,
     #[default]
     CreatedAt,
-    ValueSum
+    ValueSum,
 }
-impl Into<Column> for Field{
+impl Into<Column> for Field {
     fn into(self) -> Column {
         match self {
             Field::Id => Column::Id,
@@ -47,39 +47,37 @@ impl Into<Column> for Field{
     }
 }
 
-
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct Sorting{
+pub struct Sorting {
     field_name: Field,
     order: Sort,
 }
-impl Into<Order> for Sort{
+impl Into<Order> for Sort {
     fn into(self) -> Order {
-       match self {
-           Sort::Desc => Order::Desc,
-           Sort::Asc => Order::Asc
-       }
+        match self {
+            Sort::Desc => Order::Desc,
+            Sort::Asc => Order::Asc,
+        }
     }
 }
 
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct ExpenseQuery{
+pub struct ExpenseQuery {
     sort: Option<Sorting>,
     pagination: Option<Pagination>,
-    period: Option<DatePeriod>
-
+    period: Option<DatePeriod>,
 }
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct Pagination{
+pub struct Pagination {
     offset: Option<u64>,
     limit: Option<u64>,
 }
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct DatePeriod{
+pub struct DatePeriod {
     start: Option<chrono::DateTime<chrono::FixedOffset>>,
     stop: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
@@ -94,7 +92,7 @@ responses(
 pub(crate) async fn create_expense(
     Extension(ref pool): Extension<DatabaseConnection>,
     Json(payload): Json<CreateExpense>,
-)-> Result<Json<CreatedEntity>, Error>{
+) -> Result<Json<CreatedEntity>, Error> {
     tracing::info!("create expense");
     let arm = ExpenseEntity::insert(payload.into_active_model())
         .exec_with_returning(pool)
@@ -114,7 +112,7 @@ responses(
 pub(crate) async fn get_expenses(
     Extension(ref pool): Extension<DatabaseConnection>,
     Json(q): Json<ExpenseQuery>,
-)-> Result<Json<Vec<Expense>>, Error>{
+) -> Result<Json<Vec<Expense>>, Error> {
     tracing::info!("get expenses");
     use entities::expense::Column;
     let mut query = ExpenseEntity::find();
@@ -134,12 +132,15 @@ pub(crate) async fn get_expenses(
             query = query.filter(Column::CreatedAt.lte(stop));
         }
     }
-    if let Some(sort) = q.sort{
-        query = query.order_by(match sort.field_name {
-            Field::Id => Column::Id,
-            Field::CreatedAt => Column::CreatedAt,
-            Field::ValueSum => Column::ValueSum
-        }, sort.order.into());
+    if let Some(sort) = q.sort {
+        query = query.order_by(
+            match sort.field_name {
+                Field::Id => Column::Id,
+                Field::CreatedAt => Column::CreatedAt,
+                Field::ValueSum => Column::ValueSum,
+            },
+            sort.order.into(),
+        );
     }
 
     let expenses = query.all(pool).await.map_err(Error::DatabaseInternal)?;
@@ -185,8 +186,6 @@ pub(super) async fn edit_expense(
 
     Ok(arm)
 }
-
-
 
 /// Получение Затрат по ID
 #[instrument(skip_all, err, fields(expense_id = id.to_string()))]

@@ -3,3 +3,7 @@
 pub mod prelude;
 
 pub mod expense;
+
+pub mod receipt;
+pub mod user;
+pub mod session;

@@ -8,11 +8,13 @@ pub struct Migration;
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
-        let sql = r#"create table finance.expense
+
+        let sql = r#"create table security.session
             (
-                id           uuid default public.gen_random_uuid() not null primary key,
-                created_at    timestamp with time zone default now() not null,
-                value_sum numeric not null default 0
+                id uuid default public.gen_random_uuid() not null primary key,
+                refresh_token varchar not null,
+                expire_at varchar not null,
+                user_id uuid not null
             );"#;
 
         let stmt = Statement::from_string(manager.get_database_backend(), sql.to_owned());
@@ -25,9 +27,17 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(
                 Table::drop()
-                    .table((Alias::new("finance"), Alias::new("expense")))
+                    .table((Alias::new("security"), Alias::new("user")))
                     .to_owned(),
             )
             .await
     }
+}
+
+#[derive(DeriveIden)]
+enum Post {
+    Table,
+    Id,
+    Title,
+    Text,
 }

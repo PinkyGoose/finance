@@ -1,6 +1,6 @@
 [package]
 name = "finance-server"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -27,7 +27,13 @@ validator = "0.18.1"
 futures = "0.3.21"
 config = "0.14.0"
 tracing-subscriber = "0.3.18"
-
+http = "1.1.0"
+reqwest = "0.12.7"
+url = "2.5.2"
+aliri = "0.6.3"
+aliri_clock = "0.1.4"
+argon2 = "0.5.3"
+nanoid="*"
 [dependencies.sea-orm]
 version = "0.12.15"
 features = ["debug-print", "runtime-tokio-native-tls", "sqlx-postgres"]

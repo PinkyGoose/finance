@@ -15,5 +15,4 @@ pub struct Args {
     /// Максимальное количество подключений к базе данных
     #[clap(long, env)]
     pub max_db_connections: Option<u32>,
-
 }
