@@ -3,7 +3,21 @@ use crate::specific::expense::{
 };
 use axum::routing::{delete, get, post, put};
 use axum::Router;
+use sea_orm::{DeriveEntityModel, DeriveIntoActiveModel};
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+use uuid::Uuid;
+
 pub mod expense;
+mod receipt;
+mod expense_with_receipt;
+
+#[derive(Clone, Debug, PartialEq, Eq,Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct UserId{
+    id: Uuid
+}
+
 
 pub fn router() -> Router {
     let money = Router::new()

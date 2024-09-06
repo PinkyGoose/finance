@@ -2,7 +2,7 @@ use axum::extract::{Path, Query};
 use axum::{Extension, Json};
 use entities::expense::{Column, UpdateExpense};
 use entities::expense::{CreateExpense, Entity as ExpenseEntity, Model as Expense};
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QuerySelect};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryResult, QuerySelect};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -11,7 +11,15 @@ use sea_orm::{entity::*, query::*, sea_query};
 use sea_query::extension::postgres::PgExpr;
 use tracing::instrument;
 use uuid::Uuid;
+use crate::specific::UserId;
 
+#[derive(Serialize, ToSchema, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ExpenseResp{
+    pub(crate) expenses: Vec<entities::expense::Model>,
+    sum: f64,
+    count: i64
+}
 #[derive(Serialize, ToSchema, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct AffectedRows {
@@ -65,9 +73,9 @@ impl Into<Order> for Sort {
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ExpenseQuery {
-    sort: Option<Sorting>,
+    pub(crate) sort: Option<Sorting>,
     pagination: Option<Pagination>,
-    period: Option<DatePeriod>,
+    pub(crate) period: Option<DatePeriod>,
 }
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
@@ -78,8 +86,8 @@ pub struct Pagination {
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct DatePeriod {
-    start: Option<chrono::DateTime<chrono::FixedOffset>>,
-    stop: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub(crate) start: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub(crate) stop: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
 ///Создание затрат
 #[utoipa::path(post, path = "/expenses/create",
@@ -91,10 +99,13 @@ responses(
 )]
 pub(crate) async fn create_expense(
     Extension(ref pool): Extension<DatabaseConnection>,
+    Query(user_id): Query<UserId>,
     Json(payload): Json<CreateExpense>,
 ) -> Result<Json<CreatedEntity>, Error> {
     tracing::info!("create expense");
-    let arm = ExpenseEntity::insert(payload.into_active_model())
+    let mut exp = payload.into_active_model();
+exp.set(Column::UserId, user_id.id.into());
+    let arm = ExpenseEntity::insert(exp)
         .exec_with_returning(pool)
         .await
         .map_err(Error::DatabaseInternal)
@@ -111,19 +122,21 @@ responses(
 )]
 pub(crate) async fn get_expenses(
     Extension(ref pool): Extension<DatabaseConnection>,
+    Query(user_id): Query<UserId>,
     Json(q): Json<ExpenseQuery>,
-) -> Result<Json<Vec<Expense>>, Error> {
+) -> Result<Json<ExpenseResp>, Error> {
     tracing::info!("get expenses");
     use entities::expense::Column;
     let mut query = ExpenseEntity::find();
-    if let Some(pagination) = q.pagination {
-        if let Some(offset) = pagination.offset {
-            query = query.offset(offset);
-        }
-        if let Some(limit) = pagination.limit {
-            query = query.limit(limit);
-        }
-    }
+    // if let Some(pagination) = q.pagination {
+    //     if let Some(offset) = pagination.offset {
+    //         query = query.offset(offset);
+    //     }
+    //     if let Some(limit) = pagination.limit {
+    //         query = query.limit(limit);
+    //     }
+    // }
+    query = query.filter(Column::UserId.eq(user_id.id));
     if let Some(datas) = q.period {
         if let Some(start) = datas.start {
             query = query.filter(Column::CreatedAt.gte(start));
@@ -142,9 +155,26 @@ pub(crate) async fn get_expenses(
             sort.order.into(),
         );
     }
-
     let expenses = query.all(pool).await.map_err(Error::DatabaseInternal)?;
-    let resp = Json(expenses);
+    let sql = r#"
+        select sum(value_sum)::float as summ, count(value_sum) as countt
+            from finance.expense where user_id = 
+        "#;
+    let query_res: Option<QueryResult> = pool
+        .query_one(Statement::from_string(
+            pool.get_database_backend(),
+            format!("{}{}",sql, user_id.id),
+        ))
+        .await.unwrap();
+    let query_res = query_res.unwrap();
+    let sum: f64 = query_res.try_get("", "summ").unwrap();
+    let count: i64 = query_res.try_get("", "countt").unwrap();
+
+    let resp = Json(ExpenseResp{
+        expenses: expenses,
+        sum:sum,
+        count:count
+    });
     Ok(resp)
 }
 
@@ -164,10 +194,11 @@ params(
 pub(super) async fn edit_expense(
     Extension(ref pool): Extension<DatabaseConnection>,
     Path(id): Path<Uuid>,
+    Query(user_id): Query<UserId>,
     Json(payload): Json<UpdateExpense>,
 ) -> Result<Json<Expense>, Error> {
     tracing::info!("edit expense");
-    let model = ExpenseEntity::find_by_id(id)
+    let model = ExpenseEntity::find_by_id(id).filter(Column::UserId.eq(user_id.id))
         .one(pool)
         .await
         .map_err(Error::DatabaseInternal)?
@@ -202,9 +233,10 @@ pub(super) async fn edit_expense(
 pub(super) async fn get_expense(
     Extension(ref pool): Extension<DatabaseConnection>,
     Path(id): Path<Uuid>,
+    Query(user_id): Query<UserId>,
 ) -> Result<Json<Expense>, Error> {
     tracing::info!("get expense");
-    ExpenseEntity::find_by_id(id)
+    ExpenseEntity::find_by_id(id).filter(Column::UserId.eq(user_id.id))
         .one(pool)
         .await
         .map_err(Error::DatabaseInternal)?
@@ -226,9 +258,10 @@ pub(super) async fn get_expense(
 pub(super) async fn delete_expense(
     Extension(ref pool): Extension<DatabaseConnection>,
     Path(id): Path<Uuid>,
+    Query(user_id): Query<UserId>,
 ) -> Result<Json<AffectedRows>, Error> {
     tracing::info!("delete expense");
-    let result = ExpenseEntity::delete_by_id(id).exec(pool).await?;
+    let result = ExpenseEntity::delete_by_id(id).filter(Column::UserId.eq(user_id.id)).exec(pool).await?;
 
     Ok(Json(AffectedRows::new(result.rows_affected)))
 }

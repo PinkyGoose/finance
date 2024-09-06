@@ -9,10 +9,14 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
         let sql = r#"create table finance.receipt
+
+
             (
                 id           uuid default public.gen_random_uuid() not null primary key,
+                name varchar,
+                position varchar,
                 start_date    timestamp with time zone default now() not null,
-                stop_date timestamp with time zone default now() not null,
+                stop_date timestamp with time zone default now(),
                 sallary numeric not null default 0,
                 user_id uuid,
                 parent_id uuid,

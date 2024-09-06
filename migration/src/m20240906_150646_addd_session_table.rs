@@ -27,7 +27,7 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(
                 Table::drop()
-                    .table((Alias::new("security"), Alias::new("user")))
+                    .table((Alias::new("security"), Alias::new("session")))
                     .to_owned(),
             )
             .await

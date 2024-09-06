@@ -6,6 +6,7 @@ mod m20240906_142826_addd_user_table;
 mod m20240906_142837_addd_receipts_table;
 mod m20240906_143558_add_user_id_to_expense;
 mod m20240906_150646_addd_session_table;
+mod m20240906_175111_add_exp_rec_view;
 
 pub struct Migrator;
 
@@ -19,6 +20,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20240906_142837_addd_receipts_table::Migration),
             Box::new(m20240906_143558_add_user_id_to_expense::Migration),
             Box::new(m20240906_150646_addd_session_table::Migration),
+            Box::new(m20240906_175111_add_exp_rec_view::Migration),
         ]
     }
 }

@@ -10,8 +10,8 @@ use utoipa::ToSchema;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub created_at: chrono::DateTime<chrono::FixedOffset>,
-    pub value_sum: Decimal,
+    pub created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub value_sum: Option<Decimal>,
     pub user_id: Uuid,
 }
 
@@ -28,8 +28,8 @@ pub struct CreateExpense {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveIntoActiveModel, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateExpense {
-    pub created_at: chrono::DateTime<chrono::FixedOffset>,
-    pub value_sum: Decimal,
+    pub created_at: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub value_sum: Option<Decimal>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

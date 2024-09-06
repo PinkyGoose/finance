@@ -1,8 +1,9 @@
 use argon2::Argon2;
+use argon2::password_hash::Decimal;
 use axum::extract::DefaultBodyLimit;
 use axum::{Extension, Json, Router};
 use clap::Parser;
-use sea_orm::{ConnectOptions, Database};
+use sea_orm::{ConnectionTrait, ConnectOptions, Database, QueryResult, QuerySelect, Statement};
 
 use crate::utils::Error;
 use migration::{Migrator, MigratorTrait};
@@ -19,6 +20,8 @@ mod utils;
 
 use entities::expense::{CreateExpense, Entity as ExpenseEntity, Model as Expense};
 use sea_orm::EntityTrait;
+use tracing::info;
+
 const MAX_DB_CONNECTIONS: u32 = 20;
 
 #[tokio::main]
@@ -62,8 +65,8 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(args.listen_addr)
         .await
         .unwrap();
-    tracing::info!("service started: {}", args.listen_addr);
-    use entities::expense::Column;
+    info!("service started: {}", args.listen_addr);
+
     axum::serve(listener, app.into_make_service())
         .await
         .unwrap();

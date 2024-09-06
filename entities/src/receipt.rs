@@ -10,11 +10,13 @@ use utoipa::ToSchema;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub start_date: chrono::DateTime<chrono::FixedOffset>,
-    pub stop_date: chrono::DateTime<chrono::FixedOffset>,
-    pub sallary: Decimal,
-    pub parent: Option<Uuid>,
+    pub start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub stop_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub sallary: Option<Decimal>,
+    pub parent:Option<Uuid>,
     pub user_id: Uuid,
+    pub name: Option<String>,
+    pub position: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -23,8 +25,8 @@ pub enum Relation {}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveIntoActiveModel, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateReceipt {
-    pub start_date: chrono::DateTime<chrono::FixedOffset>,
-    pub stop_date: chrono::DateTime<chrono::FixedOffset>,
+    pub start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub stop_date: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub sallary: Decimal,
     pub parent: Option<Uuid>,
 }
@@ -32,10 +34,12 @@ pub struct CreateReceipt {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, DeriveIntoActiveModel, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateReceipt {
-    pub start_date: chrono::DateTime<chrono::FixedOffset>,
-    pub stop_date: chrono::DateTime<chrono::FixedOffset>,
-    pub sallary: Decimal,
-    pub parent: Option<Uuid>,
+    pub start_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub stop_date: Option<chrono::DateTime<chrono::FixedOffset>>,
+    pub sallary: Option<Decimal>,
+    pub name: Option<String>,
+    pub position: Option<String>
+    // pub parent: OOption<Uuid>,
 }
 
 impl ActiveModelBehavior for ActiveModel {}
