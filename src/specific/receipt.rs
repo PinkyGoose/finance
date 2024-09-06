@@ -72,8 +72,8 @@ responses(
 )]
 pub(crate) async fn get_receipts(
     Extension(ref pool): Extension<DatabaseConnection>,
-    Json(q): Json<ReceiptQuery>,
     Query(user_id): Query<UserId>,
+    Json(q): Json<ReceiptQuery>,
 ) -> Result<Json<ReceiptsResp>, Error> {
     tracing::info!("get receipts");
     use entities::receipt::Column;
