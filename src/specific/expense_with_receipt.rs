@@ -29,14 +29,14 @@ pub struct ExpReceiptQuery {
 
 
 /// Получение затрат с фильтрацией
-#[utoipa::path(post, path = "/expenses/get_all",
+#[utoipa::path(post, path = "/expenses_receipts/get_all",
 request_body = ExpenseQuery,
 responses(
 (status = 200, description = "Успешное получение Затрат", body = [Expense]),
 (status = 500, description = "Ошибка исполнения запроса")
 )
 )]
-pub(crate) async fn get_expenses(
+pub(crate) async fn get_expenses_receipts(
     Extension(ref pool): Extension<DatabaseConnection>,
     Query(user_id): Query<UserId>,
     Json(q): Json<ExpReceiptQuery>,
@@ -70,13 +70,30 @@ pub(crate) async fn get_expenses(
     let query_res: Option<QueryResult> = pool
         .query_one(Statement::from_string(
             pool.get_database_backend(),
-            format!("{}{}",sql, user_id.id),
+            format!("{}'{}'",sql, user_id.id),
         ))
         .await.unwrap();
-    let query_res = query_res.unwrap();
-    let total_expense: f64 = query_res.try_get("", "total_expense").unwrap();
-    let total_sallary: f64 = query_res.try_get("", "total_sallary").unwrap();
-    let total_count: i64 = query_res.try_get("", "total_count").unwrap();
+
+    let mut total_expense: f64 = 0.;
+    let mut total_sallary: f64 =0.;
+    let mut total_count: i64 =0;
+    match query_res{
+        None => {},
+        Some(a) => {
+            total_expense = match a.try_get::<f64>("", "total_expense") {
+                Ok(a) => {a}
+                Err(_) => {0.}
+            };
+            total_sallary = match a.try_get::<f64>("", "total_sallary") {
+                Ok(a) => {a}
+                Err(_) => {0.}
+            };
+            total_count= match a.try_get::<i64>("", "total_count"){
+                Ok(b) => {b}
+                Err(_) => {0}
+            };
+        }
+    }
     let balance = total_sallary-total_expense;
     let resp = Json(ExpenseReceiptResp{
         expenses_receipts: expenses,

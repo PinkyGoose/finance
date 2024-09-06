@@ -2,14 +2,14 @@ use axum::extract::{Path, Query};
 use axum::{Extension, Json};
 use entities::expense::{Column, UpdateExpense};
 use entities::expense::{CreateExpense, Entity as ExpenseEntity, Model as Expense};
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryResult, QuerySelect};
+use sea_orm::{ColumnTrait, DatabaseConnection, DbErr, EntityTrait, IntoActiveModel, QueryResult, QuerySelect};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::utils::{CreatedEntity, Error};
 use sea_orm::{entity::*, query::*, sea_query};
 use sea_query::extension::postgres::PgExpr;
-use tracing::instrument;
+use tracing::{info, instrument};
 use uuid::Uuid;
 use crate::specific::UserId;
 
@@ -118,7 +118,10 @@ request_body = ExpenseQuery,
 responses(
 (status = 200, description = "Успешное получение Затрат", body = [Expense]),
 (status = 500, description = "Ошибка исполнения запроса")
-)
+),
+params(
+("id" = UserId, Query, description = "Строка со списком модулей через запятую")
+),
 )]
 pub(crate) async fn get_expenses(
     Extension(ref pool): Extension<DatabaseConnection>,
@@ -158,17 +161,32 @@ pub(crate) async fn get_expenses(
     let expenses = query.all(pool).await.map_err(Error::DatabaseInternal)?;
     let sql = r#"
         select sum(value_sum)::float as summ, count(value_sum) as countt
-            from finance.expense where user_id = 
+            from finance.expense where user_id =
         "#;
+    let sql = format!("{}'{}';",sql, user_id.id);
     let query_res: Option<QueryResult> = pool
         .query_one(Statement::from_string(
             pool.get_database_backend(),
-            format!("{}{}",sql, user_id.id),
+            sql.clone(),
         ))
         .await.unwrap();
-    let query_res = query_res.unwrap();
-    let sum: f64 = query_res.try_get("", "summ").unwrap();
-    let count: i64 = query_res.try_get("", "countt").unwrap();
+    let mut sum: f64 = 0.;
+    let mut count: i64 =0;
+    match query_res{
+        None => {}
+        Some(a) => {
+            sum = match a.try_get::<f64>("", "summ") {
+                Ok(a) => {a}
+                Err(_) => {0.}
+            };
+            count= match a.try_get::<i64>("", "countt"){
+                Ok(b) => {b}
+                Err(_) => {0}
+            };
+        }
+    }
+
+
 
     let resp = Json(ExpenseResp{
         expenses: expenses,
