@@ -78,7 +78,7 @@ pub(crate) async fn get_receipts(
     tracing::info!("get receipts");
     use entities::receipt::Column;
     let mut query = ReceiptEntity::find();
-    query = query.filter(entities::expense::Column::UserId.eq(user_id.id));
+    query = query.filter(entities::receipt::Column::UserId.eq(user_id.id));
     if let Some(datas) = q.period {
         if let Some(start) = datas.start {
             query = query.filter(Column::StartDate.gte(start));
@@ -119,7 +119,7 @@ pub(super) async fn edit_receipt(
     Json(payload): Json<UpdateReceipt>,
 ) -> Result<Json<Receipt>, Error> {
     tracing::info!("edit receipt");
-    let model = ReceiptEntity::find_by_id(id).filter(entities::expense::Column::UserId.eq(user_id.id))
+    let model = ReceiptEntity::find_by_id(id).filter(entities::receipt::Column::UserId.eq(user_id.id))
         .one(pool)
         .await
         .map_err(Error::DatabaseInternal)?
@@ -157,7 +157,7 @@ pub(super) async fn get_receipt(
     Query(user_id): Query<UserId>,
 ) -> Result<Json<Receipt>, Error> {
     tracing::info!("get receipt");
-    ReceiptEntity::find_by_id(id).filter(entities::expense::Column::UserId.eq(user_id.id))
+    ReceiptEntity::find_by_id(id).filter(entities::receipt::Column::UserId.eq(user_id.id))
         .one(pool)
         .await
         .map_err(Error::DatabaseInternal)?
@@ -182,7 +182,7 @@ pub(super) async fn delete_receipt(
     Query(user_id): Query<UserId>,
 ) -> Result<Json<AffectedRows>, Error> {
     tracing::info!("delete receipt");
-    let result = ReceiptEntity::delete_by_id(id).filter(entities::expense::Column::UserId.eq(user_id.id)).exec(pool).await?;
+    let result = ReceiptEntity::delete_by_id(id).filter(entities::receipt::Column::UserId.eq(user_id.id)).exec(pool).await?;
 
     Ok(Json(AffectedRows::new(result.rows_affected)))
 }
