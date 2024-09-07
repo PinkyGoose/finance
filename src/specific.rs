@@ -7,7 +7,7 @@ use sea_orm::{DeriveEntityModel, DeriveIntoActiveModel};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
-use crate::specific::expense_with_receipt::get_expenses_receipts;
+use crate::specific::expense_with_receipt::{get_expenses_receipts, get_statistics};
 use crate::specific::receipt::{create_receipt, delete_receipt, edit_receipt, get_receipt, get_receipts};
 
 pub mod expense;
@@ -39,6 +39,7 @@ pub fn router() -> Router {
 
     let receipt_router = receipt;
     let expense_receipt_list = Router::new()
+        .route("/get_statistics", post(get_statistics))
         .route("/get_all", post(get_expenses_receipts));
 
     let expense_receipt_list_router = expense_receipt_list;

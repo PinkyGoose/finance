@@ -20,6 +20,14 @@ pub struct ExpenseReceiptResp{
     total_sallary: f64,
     balance: f64
 }
+#[derive(Serialize, ToSchema, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Statistics{
+    expense_amount: f64,
+    count: i64,
+    total_sallary: f64,
+    balance: f64
+}
 
 #[derive(Clone, Debug, Deserialize, ToSchema, Default)]
 #[serde(rename_all = "camelCase")]
@@ -32,7 +40,64 @@ pub struct ExpReceiptQuery {
 
 
 /// Получение затрат с фильтрацией
-#[utoipa::path(post, path = "/expenses_receipts/get_all",
+#[utoipa::path(post, path = "/expenses_receipts/get_statistics",
+request_body = ExpenseQuery,
+responses(
+(status = 200, description = "Успешное получение Затрат", body = [Expense]),
+(status = 500, description = "Ошибка исполнения запроса")
+)
+)]
+pub(crate) async fn get_statistics(
+    Extension(ref pool): Extension<DatabaseConnection>,
+    Query(user_id): Query<UserId>,
+) -> Result<Json<Statistics>, Error> {
+    tracing::info!("get statistics");
+
+    let sql = r#"
+        select sum(expense_amount)::float as total_expense, sum(total_daily_sallary)::float as total_sallary, count(total_daily_sallary) as total_count
+            from finance.expense_with_receipt where user_id =
+        "#;
+    let query_res: Option<QueryResult> = pool
+        .query_one(Statement::from_string(
+            pool.get_database_backend(),
+            format!("{}'{}'",sql, user_id.id),
+        ))
+        .await.unwrap();
+
+    let mut total_expense: f64 = 0.;
+    let mut total_sallary: f64 =0.;
+    let mut total_count: i64 =0;
+    match query_res{
+        None => {},
+        Some(a) => {
+            total_expense = match a.try_get::<f64>("", "total_expense") {
+                Ok(a) => {a}
+                Err(_) => {0.}
+            };
+            total_sallary = match a.try_get::<f64>("", "total_sallary") {
+                Ok(a) => {a}
+                Err(_) => {0.}
+            };
+            total_count= match a.try_get::<i64>("", "total_count"){
+                Ok(b) => {b}
+                Err(_) => {0}
+            };
+        }
+    }
+    let balance = total_sallary-total_expense;
+    let resp = Json(Statistics{
+        expense_amount: total_expense,
+        count: total_count,
+        total_sallary: total_sallary,
+        balance,
+    });
+    Ok(resp)
+}
+
+
+
+/// Получение затрат с фильтрацией
+#[utoipa::path(post, path = "/expenses_receipts/only_states",
 request_body = ExpenseQuery,
 responses(
 (status = 200, description = "Успешное получение Затрат", body = [Expense]),
@@ -44,8 +109,6 @@ pub(crate) async fn get_expenses_receipts(
     Query(user_id): Query<UserId>,
     Json(q): Json<ExpReceiptQuery>,
 ) -> Result<Json<ExpenseReceiptResp>, Error> {
-    tracing::info!("get expenses");
-    // use entities::expense::Column;
     let mut query = ExpRecpEntity::find();
     // if let Some(pagination) = q.pagination {
     //     if let Some(offset) = pagination.offset {
